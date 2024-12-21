@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { getLessonParamsRequestDto } from './dto/get-lessons-param-request.dto';
 import { Op, Sequelize } from 'sequelize';
 import { Lesson } from './models/lesson.model';
+import { Student } from './models/student.model';
+import { Teacher } from './models/teacher.model';
 
 @Injectable()
 export class AppService {
@@ -30,37 +32,92 @@ export class AppService {
       where['status'] = status;
     }
 
+    let teacherWhere = {};
     if (teacherIds && teacherIds.length > 0) {
       const teacherIdsArray = teacherIds
         .split(',')
         .map((id) => parseInt(id, 10));
-      where['id'] = {
-        [Op.in]: Sequelize.literal(`(
-          SELECT "lessonId"
-          FROM lessons_teachers
-          WHERE "teacherId" IN (${teacherIdsArray.join(',')})
-        )`),
+      teacherWhere = {
+        id: { [Op.in]: teacherIdsArray },
       };
     }
 
+    const lessons = await Lesson.findAll({
+      where,
+      attributes: [
+        'id',
+        'date',
+        'title',
+        'status',
+        [
+          Sequelize.fn('COUNT', Sequelize.col('students.LessonStudents.visit')),
+          'visitCount',
+        ],
+      ],
+      include: [
+        {
+          model: Student,
+          attributes: ['id', 'name'],
+          through: {
+            attributes: ['visit'],
+          },
+        },
+        {
+          model: Teacher,
+          where: teacherWhere,
+          attributes: ['id', 'name'],
+          through: {
+            attributes: [],
+          },
+        },
+      ],
+      group: [
+        '"Lesson"."id"',
+        '"Lesson"."date"',
+        '"Lesson"."title"',
+        '"Lesson"."status"',
+        '"students"."id"',
+        '"students"."name"',
+        '"students->LessonStudents"."lesson_id"',
+        '"students->LessonStudents"."student_id"',
+        '"students->LessonStudents"."visit"',
+        '"teachers"."id"',
+        '"teachers"."name"',
+        '"teachers->LessonTeachers"."lesson_id"',
+        '"teachers->LessonTeachers"."teacher_id"',
+      ],
+    });
+
+    const startIndex = (+page - 1) * +lessonsPerPage;
+    const paginatedLessons = lessons.slice(
+      startIndex,
+      +startIndex + +lessonsPerPage,
+    );
+
+    let studentsCountArray;
+    let filteredLessons;
+
     if (studentsCount) {
-      const studentsCountRange = studentsCount.split(',');
-      if (studentsCountRange.length === 1) {
-        where['studentsCount'] = parseInt(studentsCountRange[0], 10);
-      } else if (studentsCountRange.length === 2) {
-        where['studentsCount'] = {
-          [Op.between]: [
-            parseInt(studentsCountRange[0], 10),
-            parseInt(studentsCountRange[1], 10),
-          ],
-        };
-      }
+      studentsCountArray = studentsCount
+        .split(',')
+        .map((num) => parseInt(num, 10));
+
+      filteredLessons = paginatedLessons.filter((lesson) => {
+        const studentCount = lesson.students.length;
+
+        if (studentsCountArray.length === 1) {
+          return studentCount === studentsCountArray[0];
+        }
+
+        if (studentsCountArray.length === 2) {
+          const [minCount, maxCount] = studentsCountArray;
+          return studentCount >= minCount && studentCount <= maxCount;
+        }
+        return false;
+      });
+      return filteredLessons;
     }
 
-    return Lesson.findAll({
-      where,
-      limit: lessonsPerPage,
-      offset: (page - 1) * lessonsPerPage,
-    });
+    return paginatedLessons;
   }
 }

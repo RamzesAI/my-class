@@ -1,10 +1,4 @@
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Matches,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator';
 
 export class getLessonParamsRequestDto {
   @IsNotEmpty()
@@ -17,8 +11,8 @@ export class getLessonParamsRequestDto {
 
   @IsNotEmpty()
   @IsOptional()
-  @IsNumber()
-  status: number;
+  @IsString()
+  status: string;
 
   @IsNotEmpty()
   @IsOptional()
@@ -38,11 +32,11 @@ export class getLessonParamsRequestDto {
 
   @IsNotEmpty()
   @IsOptional()
-  @IsNumber()
-  page: number;
+  @IsString()
+  page: string;
 
   @IsNotEmpty()
   @IsOptional()
-  @IsNumber()
-  lessonsPerPage: number;
+  @IsString()
+  lessonsPerPage: string;
 }
