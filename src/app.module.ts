@@ -22,7 +22,7 @@ import { Student } from './models/student.model';
       password: process.env.POSTGRES_PASSWORD,
       database: process.env.POSTGRES_DB,
       models: [Lesson, Teacher, LessonTeachers, Student, LessonStudents],
-      autoLoadModels: true,
+      autoLoadModels: false,
     }),
     SequelizeModule.forFeature([
       Lesson,

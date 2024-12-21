@@ -8,13 +8,13 @@ import {
 import { Lesson } from './lesson.model';
 import { Teacher } from './teacher.model';
 
-@Table({ tableName: 'lessons_teachers', createdAt: false, updatedAt: false })
+@Table({ tableName: 'lesson_teachers', timestamps: false })
 export class LessonTeachers extends Model<LessonTeachers> {
   @ForeignKey(() => Lesson)
   @Column({ type: DataType.INTEGER })
-  lessonId: number;
+  lesson_id: number;
 
   @ForeignKey(() => Teacher)
   @Column({ type: DataType.INTEGER })
-  teacherId: number;
+  teacher_id: number;
 }

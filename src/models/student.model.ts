@@ -8,7 +8,7 @@ import {
 import { Lesson } from './lesson.model';
 import { LessonStudents } from './lesson-student.model';
 
-@Table({ tableName: 'students' })
+@Table({ tableName: 'students', timestamps: false })
 export class Student extends Model<Student> {
   @Column({
     type: DataType.INTEGER,
